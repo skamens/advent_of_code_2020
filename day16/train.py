@@ -11,6 +11,7 @@ ranges = []
 mine = []
 others = []
 
+fields = dict()
 with open(filename) as f_obj:
 
     # First group has the definitions, up to a blank line
@@ -20,7 +21,11 @@ with open(filename) as f_obj:
         if (line == '\n') :
             break
 
-        flds = line.split()
+        (fieldname, rest) = line.split(':')
+        
+        fields[fieldname] = dict()
+        fields[fieldname]["ranges"] = []
+        flds = rest.split()
         for f in flds :
             a = re.match(r'(\d+)-(\d+)', f)
             if (a != None) :
@@ -28,7 +33,9 @@ with open(filename) as f_obj:
                 end = int(a.group(2))
 
                 ranges.append([start,end])
-        
+                fields[fieldname]["ranges"].append([start,end])
+        fields[fieldname]["ranges"].sort(key = lambda x:x[0])
+
     # Now we have all the ranges. Sort them
     ranges.sort(key = lambda x: x[0])
 
@@ -53,8 +60,6 @@ with open(filename) as f_obj:
     mine = line.split(',')
     mine = [int(x) for x in mine]
 
-    print (mine)
-
     # Now a blank line, then 'nearby tickets'
     f_obj.readline()
     f_obj.readline()
@@ -65,16 +70,40 @@ with open(filename) as f_obj:
         t = line.split(',')
         others.append([int(x) for x in t])
 
-    invalid = 0
-    for t in others :
-        for n in t :
-            found = False
-            for r in ranges:
-                if (n > r[0] and n < r[1]) :
-                    found = True
-                    break
-            
-            if (not found) :
-                invalid += n
+invalid = 0
+for t in others :
+    for n in t :
+        found = False
+        for r in ranges:
+            if (n > r[0] and n < r[1]) :
+                found = True
+                break
+        
+        if (not found) :
+            invalid += n
+            # Since it's invalid, remove it from the list
+            others.remove(t)
 
-print (invalid)
+for f in fields:
+    for t in others:
+        matchingIndex = -1
+        for i in range(0, len(t)):
+            for r in fields[f]["ranges"]:
+                if (t[i] >= r[0] and t[i] <= r[1]) :
+                    if matchingIndex == -1:
+                        matchingIndex = i
+                    else :
+                        matchingIndex = -1
+                        break
+        if (matchingIndex != -1):
+            fields[f]["position"] = matchingIndex
+            break
+
+
+print (fields)
+
+
+    
+
+
+
