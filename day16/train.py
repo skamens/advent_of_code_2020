@@ -5,11 +5,35 @@ import re
 import math
 import functools
 
-filename = '/usr/local/google/home/skamens/advent_of_code_2020/day16/input.txt'
+filename = 'day16/input.txt'
 
 ranges = []
 mine = []
 others = []
+
+def matchRanges(value, ranges):
+    for r in ranges:
+        if (value >= r[0] and value <= r[1]) :
+            return True
+    return False
+
+def matchesOnlyOne(value, fields):
+    matchingField = ''
+    matches = 0
+    for f in fields:
+        if ("position" in fields[f]) :
+            continue
+
+        if matchRanges(value, fields[f]["ranges"]) :
+            matches += 1
+            matchingField = f
+            
+    if (matches == 1) :
+        return matchingField
+    else:
+        return ''
+
+
 
 fields = dict()
 with open(filename) as f_obj:
@@ -25,6 +49,7 @@ with open(filename) as f_obj:
         
         fields[fieldname] = dict()
         fields[fieldname]["ranges"] = []
+        fields[fieldname]["positions"] = []
         flds = rest.split()
         for f in flds :
             a = re.match(r'(\d+)-(\d+)', f)
@@ -84,26 +109,64 @@ for t in others :
             # Since it's invalid, remove it from the list
             others.remove(t)
 
-for f in fields:
-    for t in others:
-        matchingIndex = -1
-        for i in range(0, len(t)):
-            for r in fields[f]["ranges"]:
-                if (t[i] >= r[0] and t[i] <= r[1]) :
-                    if matchingIndex == -1:
-                        matchingIndex = i
-                    else :
-                        matchingIndex = -1
-                        break
-        if (matchingIndex != -1):
-            fields[f]["position"] = matchingIndex
+# Start with the first field
+# Go through all tickets position by position and see 
+# if they all match
+
+
+for f in fields :
+    for pos in range(0, len(fields)) :
+        found = True
+        for t in others :
+            if (not matchRanges(t[pos], fields[f]["ranges"])) :
+                found = False
+                break
+        # If I get here, they all matched, so the position for this field
+        # is "pos"
+
+        if (found) :
+            fields[f]["positions"].append(pos)
+        
+
+# OK, now go through the fields iteratively, finding one with 
+# a single position value
+
+done = False
+while (not done):
+
+    foundField = ''
+    for f in fields:
+        if len(fields[f]["positions"]) == 1 :
+            foundField = f
             break
+
+    if len(foundField):
+        toRemove = fields[foundField]["positions"][0]
+        fields[foundField]["pos"] = toRemove
+
+        for f in fields:
+            if toRemove in fields[f]["positions"] :
+                fields[f]["positions"].remove(toRemove)
+    else :
+        done = True
+
+
+# 
+# Now find the 6 values I need
+#
+result = 1
+
+for f in fields:
+    if (re.match(r'^departure', f)) :
+        pos = fields[f]["pos"]
+        print (f, ': pos=', pos, ' value=', mine[pos])
+        result *= mine[pos]
+
+print(result)
+
+
+
+            
 
 
 print (fields)
-
-
-    
-
-
-
