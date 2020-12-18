@@ -54,7 +54,7 @@ for passport in passportList :
         continue
 
     # Height
-    m = re.match('^\d+', passport['hgt'])
+    m = re.match(r'^\d+', passport['hgt'])
     value = int(m.group())
 
     units = passport['hgt'][m.end():]
