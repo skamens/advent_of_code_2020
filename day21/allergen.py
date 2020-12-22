@@ -5,12 +5,17 @@ import re
 import math
 import functools
 
-filename = 'day21/smallinput.txt'
+filename = 'day21/input.txt'
 
+
+# ingredients with the set of all recipes that they are in
 ingredients = {}
-all_allergens = set()
-recipes = []
 
+
+# Allergens with the set of all recipes they are in.
+allergens = {}
+
+recipeNum = 0
 with open(filename) as f_obj:
     # Assume the matrix starts at 0,0 (z is 0)
     # Read the list and add it to the space
@@ -19,49 +24,76 @@ with open(filename) as f_obj:
         line = line.rstrip()
         
         a = re.match(r'^(.*) \(contains (.*)\)$',line)
-        print(a.group(1), a.group(2))
-
-        d = dict()
-        d["ingredients"] = a.group(1).split(' ')
-        d["allergens"] = set()     
 
         for ingredient in a.group(1).split(' '):
-            for allergen in a.group(2).split(','):
-                allergen = allergen.strip()
-                all_allergens.add(allergen)
-                d["allergens"].add(allergen)
 
-            if (not ingredient in ingredients) :
+            if not ingredient in ingredients:
                 ingredients[ingredient] = {}
-                ingredients[ingredient]["could_have"] = set()
-                ingredients[ingredient]["cant_have"] = set()
+                ingredients[ingredient]["recipes"] = set()
+                ingredients[ingredient]["count"] = 0
 
-                      
-            ingredients[ingredient]["could_have"].add(allergen)
 
-        recipes.append(d)
-    
-print(recipes)
-print(ingredients)
-for ing in ingredients:
-    # The could_have member has the list of all allergens this ingredient
-    # could possibly have. For each of those, we go through all recipes
-    # to see if there are recipes that don't have that allergen. If so,
-    # it can't have that one
+            ingredients[ingredient]["recipes"].add(recipeNum)
+            ingredients[ingredient]["count"] += 1
 
-    for r in recipes:
-        if not ing in r["ingredients"] :
-            continue
+        for allergen in a.group(2).split(','):
+            allergen = allergen.strip()
+            if not allergen in allergens:
+                allergens[allergen] = set()
+            
+            allergens[allergen].add(recipeNum)
 
-        # OK, this recipe has this ingredient. 
-        # Does it have at least one of the allergens that this ingredient 
-        # is associated with?
+        recipeNum += 1
 
-        if len(ingredients[ing]["could_have"] & r["allergens"]) == 0 :
-            ingredients[ing]["cant_have"] |= r["allergens"]
+# Now for each ingredient see if its set of recipes is a subset of
+# any of the allergen sets
 
-print (ingredients)
-for ing in ingredients:
-    ingredients[ing]["could_have"] -= ingredients[ing]["cant_have"]
+totalIngredients = 0
 
-    print(ing, ": ", ingredients[ing]["could_have"])
+inertIngredients = []
+
+for ing in ingredients :
+    could_be_allergen = False
+    for a in allergens:
+        if (allergens[a] <= ingredients[ing]["recipes"]) :
+            # Could be this allergen, so we continue
+            could_be_allergen = True
+            break
+
+    if not could_be_allergen:
+        totalIngredients += ingredients[ing]["count"]
+        # Get rid of the ingredient that is inert
+        inertIngredients.append(ing)
+        
+print("Total Ingredients:", totalIngredients)
+
+for ing in inertIngredients:
+    del ingredients[ing]
+
+dangerous = {}
+while len(allergens) :
+    foundAl = ''
+    matchedIng = ''
+    for al in allergens:
+        onlyOne = True
+        matchedIng = ''
+        for ing in ingredients:
+            if (allergens[al] <= ingredients[ing]["recipes"]) :
+                if (matchedIng == ''):
+                    matchedIng = ing
+                else:
+                    onlyOne = False
+                    break
+        if (onlyOne) :
+            print(al,":",matchedIng)
+            del ingredients[matchedIng]
+            foundAl = al
+            break
+    del allergens[foundAl]
+    dangerous[foundAl] = matchedIng
+
+print(sorted(dangerous))
+part2 = ",".join([dangerous[i] for i in sorted(dangerous)])
+
+print(part2)
+
