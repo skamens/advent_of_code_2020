@@ -18,73 +18,89 @@ class Cup:
 
 
 class Cups:
-    
+    maxlabel = 0
     head = None
     tail = None
     lookup = {}
+
 
     def __init__(self):
         self.cups = None
 
     def add(self, label):
         self.tail = Cup(label, self.tail)
-        lookup[label] = self.tail
-        if (not head) :
-            head = self.tail
+        self.lookup[label] = self.tail
+        self.maxlabel = max(self.maxlabel, label)
+        if (not self.head) :
+            self.head = self.tail
 
 
     def close(self):
         self.tail.next = self.head
+        self.head.prev = self.tail
 
     def move(self):
 
         # Find the segment to remove
-        segstart = head.next
-        segend = head.next.next.next
+        segstart = self.head.next
+        segend = segstart.next.next
 
         # snip it out of the current list
-        head.next = segend.next
-        segend.next.prev = head
+        self.head.next = segend.next
+        segend.next.prev = self.head
 
         # figure out where to put it
-        destlabel = head.prev.label
+        destlabel = self.head.label - 1
+        if destlabel == 0:
+            destlabel = self.maxlabel
         while ((segstart.label == destlabel) or \
                 (segstart.next.label == destlabel) or \
                 (segstart.next.next.label == destlabel)) :
             destlabel -= 1
+            if destlabel == 0:
+                destlabel = self.maxlabel
 
-        dest = lookup[destlabel]
-        dest.prev.next = segstart
-        segstart.next = dest
+        dest = self.lookup[destlabel]
+        segend.next = dest.next
+        dest.next.prev = segend
+       
+        dest.next = segstart
+        segstart.prev = dest
+        
+        self.head = self.head.next
 
-        head = head.next
+    def print(self):
+        m = self.head
+        
+        while(True):
+            if m == self.head :
+                print (f'({m.label})', end=' ')
+            else:
+                print(m.label, end=' ')
 
+            if (m.next == self.head) :
+                break
+            
+            m = m.next
 
-destlabel = cups[current] - 1
+        print('')
 
-    for _ in range(0,3) :
-        idx = (current + 1) % len(cups)
-        remove.append(cups.pop(idx))
-        if (idx < current):
-            current -= 1
-
-    while(True) :
-        try:
-            destindex = cups.index(destlabel)
-            break
-        except ValueError:
-            destlabel -= 1
-            if destlabel < min(cups):
-                destlabel = max(cups)
     
-    for i in range(destindex + 1, destindex + 4):
-        cups.insert(i, remove.pop(0))
-        if i <= current:
-            current += 1
+    def part1ans(self):
+        m = self.lookup[1]
+        m = m.next
+        while(m.label != 1):
+            print (m.label, end='')
+            m = m.next
+        print ('')
 
-    return (current + 1) % len(cups)
 
+    def part2ans(self):
+        one = self.lookup[1]
+        n1 = one.next.label
+        n2 = one.next.next.label
 
+        print(f'{n1} * {n2} = {n1 * n2}')
 
 
 def seenString(current, cups):
@@ -148,53 +164,38 @@ def move(current, cups):
     return (current + 1) % len(cups)
 
 def part1(input) :
-    cups = list(input)
-    cups = [int(x) for x in cups]
 
-    current = 0
+    cups = Cups()
+
+    for c in [int(x) for x in list(input)] :
+        cups.add(c)
+    
+    cups.close()
+
+    cups.print()
+
     for _ in range(0,100):
-        current = move(current, cups)
+        cups.move()
+        cups.print()
 
-    str = ''
-    idx = cups.index(1)
-    idx = (idx + 1) % len(cups)
-
-    for i in range(0, len(cups)-1):
-        str += f'{cups[idx]}'
-        idx = (idx + 1) % len(cups)
-
-    print(str)
+    cups.part1ans()
 
 
 def part2(input):
+    cups = Cups()
 
-    seen = {}
-    cups = list(input)
-    cups = [int(x) for x in cups]
+    for c in [int(x) for x in list(input)] :
+        cups.add(c)
 
-    x = max(cups) + 1
-    while (x <= 1000000):
-        cups.append(x)
-        x += 1
+    for x in range(cups.maxlabel+1,1000000):
+        cups.add(x)
 
-    current = 0
-    cnt = 0
-    while (not isSeen(current, cups, seen)) and (cnt < 10000000) :
-        addSeen(current, cups, seen)
-        current = move(current, cups)
-        cnt += 1
-        if (cnt % 100000) == 0:
-            print(cnt)
+    cups.close()
 
-    print("Seen! Length of seen is", len(seen))
-        
+    for _ in range(0,10000000):
+        cups.move()
 
-    #idx = cups.index(1)
-    #num1 = cups[(idx + 1) % len(cups)]
-    #num2 = cups[(idx + 2) % len(cups)]
-
-    #print (f'{num1} * {num2} = {num1 * num2}')
-
+    cups.part2ans()
 
 # Test version
 #part1('389125467')
@@ -202,7 +203,10 @@ def part2(input):
 # Input for part 1
 #part1('653427918')
 
-part2('389125467')
+#part2('389125467')
+part2('653427918')
+
+
 #part2('38912')
 
 
