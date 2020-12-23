@@ -18,10 +18,73 @@ class Cup:
 
 
 class Cups:
+    
+    head = None
+    tail = None
+    lookup = {}
+
     def __init__(self):
         self.cups = None
 
-    def add()
+    def add(self, label):
+        self.tail = Cup(label, self.tail)
+        lookup[label] = self.tail
+        if (not head) :
+            head = self.tail
+
+
+    def close(self):
+        self.tail.next = self.head
+
+    def move(self):
+
+        # Find the segment to remove
+        segstart = head.next
+        segend = head.next.next.next
+
+        # snip it out of the current list
+        head.next = segend.next
+        segend.next.prev = head
+
+        # figure out where to put it
+        destlabel = head.prev.label
+        while ((segstart.label == destlabel) or \
+                (segstart.next.label == destlabel) or \
+                (segstart.next.next.label == destlabel)) :
+            destlabel -= 1
+
+        dest = lookup[destlabel]
+        dest.prev.next = segstart
+        segstart.next = dest
+
+        head = head.next
+
+
+destlabel = cups[current] - 1
+
+    for _ in range(0,3) :
+        idx = (current + 1) % len(cups)
+        remove.append(cups.pop(idx))
+        if (idx < current):
+            current -= 1
+
+    while(True) :
+        try:
+            destindex = cups.index(destlabel)
+            break
+        except ValueError:
+            destlabel -= 1
+            if destlabel < min(cups):
+                destlabel = max(cups)
+    
+    for i in range(destindex + 1, destindex + 4):
+        cups.insert(i, remove.pop(0))
+        if i <= current:
+            current += 1
+
+    return (current + 1) % len(cups)
+
+
 
 
 def seenString(current, cups):
