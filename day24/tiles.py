@@ -115,7 +115,6 @@ def part1(filename):
 
     with open(filename) as f_obj:
         for line in f_obj:
-            t = referencetile
             if processLine(line, referencetile) == 'black':
                 blackCount += 1
             else :
